@@ -1,0 +1,65 @@
+<resources>
+    <string name="app_name">TravelScribe</string>
+    
+    <!-- General -->
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="back">Back</string>
+    <string name="settings">Settings</string>
+    <string name="search">Search</string>
+    
+    <!-- Trips -->
+    <string name="trips">Trips</string>
+    <string name="new_trip">New Trip</string>
+    <string name="trip_title">Trip Title</string>
+    <string name="trip_start_date">Start Date</string>
+    <string name="trip_end_date">End Date</string>
+    <string name="no_trips">No trips yet. Create your first trip!</string>
+    
+    <!-- Days -->
+    <string name="day">Day %1$d</string>
+    <string name="add_day">Add Day</string>
+    <string name="no_days">No days recorded for this trip.</string>
+    
+    <!-- Recording -->
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+    <string name="pause_recording">Pause</string>
+    <string name="resume_recording">Resume</string>
+    <string name="cancel_recording">Cancel Recording</string>
+    <string name="recording_in_progress">Recording…</string>
+    <string name="processing">Processing…</string>
+    <string name="transcribing">Transcribing your recording…</string>
+    
+    <!-- Expenses -->
+    <string name="expenses">Expenses</string>
+    <string name="add_expense">Add Expense</string>
+    <string name="expense_item">Item</string>
+    <string name="expense_amount">Amount</string>
+    <string name="expense_currency">Currency</string>
+    <string name="expense_category">Category</string>
+    <string name="total_expenses">Total: %1$s</string>
+    
+    <!-- Errors -->
+    <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_permission_audio">Microphone permission is required for recording.</string>
+    <string name="error_recording_failed">Recording failed. Please try again.</string>
+    <string name="error_transcription_failed">Transcription failed. Please try again.</string>
+    
+    <!-- Permissions -->
+    <string name="permission_audio_rationale">TravelScribe needs microphone access to record your travel experiences.</string>
+    <string name="permission_audio_denied">Microphone permission denied. Please enable it in settings.</string>
+    
+    <!-- Content Descriptions -->
+    <string name="cd_record_button">Record audio</string>
+    <string name="cd_stop_button">Stop recording</string>
+    <string name="cd_play_button">Play audio</string>
+    <string name="cd_delete_button">Delete</string>
+    <string name="cd_edit_button">Edit</string>
+    <string name="cd_back_button">Go back</string>
+    <string name="cd_settings_button">Open settings</string>
+</resources>
