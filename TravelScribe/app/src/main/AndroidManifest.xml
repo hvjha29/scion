@@ -29,6 +29,12 @@
         android:theme="@style/Theme.TravelScribe"
         tools:targetApi="34">
 
+        <!-- Foreground service for microphone recording -->
+        <service
+            android:name=".core.audio.RecordingForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
