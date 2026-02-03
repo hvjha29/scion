@@ -16,6 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -55,29 +58,40 @@ class TripTimelineViewModel @Inject constructor(
     private fun loadTripData() {
         viewModelScope.launch {
             try {
-                // Combine trip and days flows
+                // Combine trip and days flows from repositories
                 combine(
-                    tripRepository.getTripById(tripId),
-                    travelDayRepository.getDaysForTrip(tripId)
+                    tripRepository.observeTrip(tripId),
+                    travelDayRepository.observeTravelDaysForTrip(tripId)
                 ) { trip, days ->
-                    Pair(trip, days.sortedByDescending { it.date })
-                }.collectLatest { (trip, days) ->
-                    // Load logs for each day
-                    val logsMap = mutableMapOf<Long, List<TravelLog>>()
-                    days.forEach { day ->
-                        travelLogRepository.getLogsForDay(day.id).collectLatest { logs ->
-                            logsMap[day.id] = logs
+                    trip to days.sortedByDescending { it.date }
+                }.flatMapLatest { (trip, days) ->
+                    if (days.isEmpty()) {
+                        flowOf(
+                            TripTimelineUiState(
+                                trip = trip,
+                                days = days,
+                                isLoading = false
+                            )
+                        )
+                    } else {
+                        // Create a list of flows for each day's logs
+                        val logFlows = days.map { day ->
+                            travelLogRepository.observeTravelLogsForDay(day.id).map { logs ->
+                                day.id to logs
+                            }
+                        }
+                        // Combine all log flows into a single flow emitting the logs map
+                        combine(logFlows) { logPairs ->
+                            TripTimelineUiState(
+                                trip = trip,
+                                days = days,
+                                logsForDay = logPairs.toMap(),
+                                isLoading = false
+                            )
                         }
                     }
-
-                    _uiState.update { state ->
-                        state.copy(
-                            trip = trip,
-                            days = days,
-                            logsForDay = logsMap,
-                            isLoading = false
-                        )
-                    }
+                }.collectLatest { newState ->
+                    _uiState.value = newState
                 }
             } catch (e: Exception) {
                 _uiState.update { state ->

@@ -1,7 +1,5 @@
 package com.travelscribe.presentation.screens.recording
 
-import android.media.MediaRecorder
-import android.os.Build
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -54,28 +52,29 @@ class RecordingViewModel @Inject constructor(
      */
     fun startRecording() {
         viewModelScope.launch {
-            try {
-                val filePath = voiceRecorderManager.startRecording()
-                startTime = System.currentTimeMillis()
-                
-                _uiState.update { state ->
-                    state.copy(
-                        isRecording = true,
-                        isPaused = false,
-                        audioFilePath = filePath,
-                        error = null
-                    )
-                }
+            voiceRecorderManager.startRecording()
+                .onSuccess { filePath ->
+                    startTime = System.currentTimeMillis()
 
-                // Start duration timer
-                startDurationTimer()
-            } catch (e: Exception) {
-                _uiState.update { state ->
-                    state.copy(
-                        error = e.message ?: "Failed to start recording"
-                    )
+                    _uiState.update { state ->
+                        state.copy(
+                            isRecording = true,
+                            isPaused = false,
+                            audioFilePath = filePath,
+                            error = null
+                        )
+                    }
+
+                    // Start duration timer
+                    startDurationTimer()
                 }
-            }
+                .onFailure { e ->
+                    _uiState.update { state ->
+                        state.copy(
+                            error = e.message ?: "Failed to start recording"
+                        )
+                    }
+                }
         }
     }
 
@@ -84,23 +83,24 @@ class RecordingViewModel @Inject constructor(
      */
     fun stopRecording() {
         viewModelScope.launch {
-            try {
-                voiceRecorderManager.stopRecording()
-                durationJob?.cancel()
-                
-                _uiState.update { state ->
-                    state.copy(
-                        isRecording = false,
-                        isPaused = false
-                    )
+            voiceRecorderManager.stopRecording()
+                .onSuccess {
+                    durationJob?.cancel()
+
+                    _uiState.update { state ->
+                        state.copy(
+                            isRecording = false,
+                            isPaused = false
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update { state ->
-                    state.copy(
-                        error = e.message ?: "Failed to stop recording"
-                    )
+                .onFailure { e ->
+                    _uiState.update { state ->
+                        state.copy(
+                            error = e.message ?: "Failed to stop recording"
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -109,22 +109,23 @@ class RecordingViewModel @Inject constructor(
      */
     fun pauseRecording() {
         viewModelScope.launch {
-            try {
-                voiceRecorderManager.pauseRecording()
-                durationJob?.cancel()
-                
-                _uiState.update { state ->
-                    state.copy(
-                        isPaused = true
-                    )
+            voiceRecorderManager.pauseRecording()
+                .onSuccess {
+                    durationJob?.cancel()
+
+                    _uiState.update { state ->
+                        state.copy(
+                            isPaused = true
+                        )
+                    }
                 }
-            } catch (e: Exception) {
-                _uiState.update { state ->
-                    state.copy(
-                        error = e.message ?: "Failed to pause recording"
-                    )
+                .onFailure { e ->
+                    _uiState.update { state ->
+                        state.copy(
+                            error = e.message ?: "Failed to pause recording"
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -133,23 +134,23 @@ class RecordingViewModel @Inject constructor(
      */
     fun resumeRecording() {
         viewModelScope.launch {
-            try {
-                voiceRecorderManager.resumeRecording()
-                
-                _uiState.update { state ->
-                    state.copy(
-                        isPaused = false
-                    )
-                }
+            voiceRecorderManager.resumeRecording()
+                .onSuccess {
+                    _uiState.update { state ->
+                        state.copy(
+                            isPaused = false
+                        )
+                    }
 
-                startDurationTimer()
-            } catch (e: Exception) {
-                _uiState.update { state ->
-                    state.copy(
-                        error = e.message ?: "Failed to resume recording"
-                    )
+                    startDurationTimer()
                 }
-            }
+                .onFailure { e ->
+                    _uiState.update { state ->
+                        state.copy(
+                            error = e.message ?: "Failed to resume recording"
+                        )
+                    }
+                }
         }
     }
 
@@ -174,7 +175,7 @@ class RecordingViewModel @Inject constructor(
      */
     fun getAmplitude(): Int {
         return if (_uiState.value.isRecording && !_uiState.value.isPaused) {
-            voiceRecorderManager.getMaxAmplitude()
+            voiceRecorderManager.amplitude.value
         } else {
             0
         }
@@ -190,8 +191,6 @@ class RecordingViewModel @Inject constructor(
     override fun onCleared() {
         super.onCleared()
         durationJob?.cancel()
-        if (_uiState.value.isRecording) {
-            voiceRecorderManager.stopRecording()
-        }
+        voiceRecorderManager.release()
     }
 }

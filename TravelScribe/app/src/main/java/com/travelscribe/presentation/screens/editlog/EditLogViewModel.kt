@@ -14,7 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 /**
@@ -59,18 +61,19 @@ class EditLogViewModel @Inject constructor(
     private fun loadLog() {
         viewModelScope.launch {
             try {
-                travelLogRepository.getLogById(logId).collectLatest { log ->
+                travelLogRepository.observeTravelLog(logId).collectLatest { log ->
                     log?.let {
                         originalLog = it
                         _uiState.update { state ->
+                            val zonedDateTime = it.createdAt.atZone(ZoneId.systemDefault())
                             state.copy(
                                 logId = it.id,
                                 title = extractTitle(it.transcribedText),
                                 body = it.transcribedText,
-                                timestamp = it.createdAt,
+                                timestamp = zonedDateTime.toLocalDateTime(),
                                 expenses = it.expenses,
                                 location = extractLocation(it.transcribedText),
-                                date = it.createdAt?.toLocalDate()?.let { d -> 
+                                date = zonedDateTime.toLocalDate().let { d ->
                                     "${d.month.name.take(3).lowercase().replaceFirstChar { c -> c.uppercase() }} ${d.dayOfMonth}"
                                 },
                                 category = extractCategory(it.expenses),
@@ -109,8 +112,8 @@ class EditLogViewModel @Inject constructor(
      */
     fun updateExpense(expense: Expense) {
         _uiState.update { state ->
-            val updatedExpenses = state.expenses.map { 
-                if (it.item == expense.item) expense else it 
+            val updatedExpenses = state.expenses.map {
+                if (it.item == expense.item) expense else it
             }
             state.copy(expenses = updatedExpenses)
         }
@@ -146,9 +149,9 @@ class EditLogViewModel @Inject constructor(
                     val updatedLog = original.copy(
                         transcribedText = _uiState.value.body,
                         expenses = _uiState.value.expenses,
-                        updatedAt = LocalDateTime.now()
+                        updatedAt = Instant.now()
                     )
-                    travelLogRepository.updateLog(updatedLog)
+                    travelLogRepository.updateTravelLog(updatedLog)
                 }
 
                 _uiState.update { state ->
@@ -219,6 +222,6 @@ class EditLogViewModel @Inject constructor(
      * Extract category from expenses.
      */
     private fun extractCategory(expenses: List<Expense>): String? {
-        return expenses.firstOrNull()?.category
+        return expenses.firstOrNull()?.category?.name
     }
 }
